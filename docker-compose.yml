@@ -1,0 +1,116 @@
+services:
+
+  # ---------------------------------------------------------------- MySQL
+  db:
+    image: mysql:8.4
+    container_name: foodrush-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: ${TZ}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db-data:/var/lib/mysql
+    # Muốn dùng MySQL client trên máy thì bỏ comment dòng dưới:
+    # ports: ["127.0.0.1:3306:3306"]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ------------------------------------------------------------- Backend
+  backend:
+    build:
+      context: ./FoodRush_BE/be
+      dockerfile: Dockerfile
+    container_name: foodrush-be
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mysql://db:3306/${DB_NAME}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_POOL_SIZE: ${DB_POOL_SIZE}
+
+      SERVER_PORT: 8080
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO}
+      JPA_SHOW_SQL: ${JPA_SHOW_SQL}
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      OAUTH2_REDIRECT_URI: ${OAUTH2_REDIRECT_URI}
+
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      CLOUDINARY_FOLDER: ${CLOUDINARY_FOLDER}
+      CLOUDINARY_MAX_FILE_SIZE: ${CLOUDINARY_MAX_FILE_SIZE}
+      CLOUDINARY_MAX_REQUEST_SIZE: ${CLOUDINARY_MAX_REQUEST_SIZE}
+      CLOUDINARY_MAX_FILE_SIZE_BYTES: ${CLOUDINARY_MAX_FILE_SIZE_BYTES}
+
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+
+      OTP_TTL_MINUTES: ${OTP_TTL_MINUTES}
+      OTP_SENDER_NAME: ${OTP_SENDER_NAME}
+      OTP_SENDER_EMAIL: ${OTP_SENDER_EMAIL}
+
+      ADMIN_USERNAME: ${ADMIN_USERNAME}
+      ADMIN_DISPLAY_NAME: ${ADMIN_DISPLAY_NAME}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ADMIN_PASSWORD_FILE: /app/data/admin-credentials.txt
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      APP_TIMEZONE: ${APP_TIMEZONE}
+
+      SEED_ENABLED: ${SEED_ENABLED}
+      SEED_STAFF_USERNAME: ${SEED_STAFF_USERNAME}
+      SEED_STAFF_EMAIL: ${SEED_STAFF_EMAIL}
+      SEED_STAFF_PASSWORD: ${SEED_STAFF_PASSWORD}
+      SEED_STAFF_DISPLAY_NAME: ${SEED_STAFF_DISPLAY_NAME}
+      SEED_STAFF_PASSWORD_FILE: /app/data/staff-credentials.txt
+
+      COIN_SCORE_DIVISOR: ${COIN_SCORE_DIVISOR}
+      DAILY_COIN_EARNING_CAP: ${DAILY_COIN_EARNING_CAP}
+      COUPON_EXPIRY_DAYS: ${COUPON_EXPIRY_DAYS}
+      TZ: ${TZ}
+    volumes:
+      # Giữ lại file mật khẩu staff sinh ra lúc chạy lần đầu.
+      - staff-data:/app/data
+    # Muốn gọi thẳng API/Swagger từ máy thì bỏ comment dòng dưới:
+    # ports: ["127.0.0.1:8080:8080"]
+
+  # ------------------------------------------------------------ Frontend
+  frontend:
+    build:
+      context: ./FoodRush_FE/foodrush
+      dockerfile: Dockerfile
+      args:
+        # Rỗng => dùng cùng origin, nginx đảo nối /api sang backend.
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+    container_name: foodrush-fe
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT}:80"
+
+volumes:
+  db-data:
+  staff-data:

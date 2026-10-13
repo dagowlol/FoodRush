@@ -1,0 +1,26 @@
+# ==================== Thư mục gốc ====================
+.env
+.env.local
+.env.*.local
+admin.css
+.vscode/
+
+# ==================== Backend ====================
+FoodRush_BE/be/target/
+FoodRush_BE/be/staff-credentials.txt
+FoodRush_BE/be/admin-credentials.txt
+FoodRush_BE/be/data/
+FoodRush_BE/be/*.log
+FoodRush_BE/be/.env
+FoodRush_BE/be/HELP.md
+
+# ==================== Frontend ====================
+FoodRush_FE/foodrush/node_modules/
+FoodRush_FE/foodrush/dist/
+FoodRush_FE/foodrush/.env
+FoodRush_FE/foodrush/.env.local
+FoodRush_FE/foodrush/*.log
+
+# ==================== Hệ điều hành ====================
+.DS_Store
+Thumbs.db
