@@ -1,0 +1,6 @@
+[submodule "FoodRush_BE"]
+	path = FoodRush_BE
+	url = https://github.com/dagowlol/FoodRush_BE.git
+[submodule "FoodRush_FE"]
+	path = FoodRush_FE
+	url = https://github.com/dagowlol/FoodRush_FE.git
